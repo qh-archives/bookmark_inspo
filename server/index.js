@@ -63,10 +63,17 @@ app.post('/admin/seed', async (req, res) => {
   }
 });
 
-// Serve React frontend
+// Serve React frontend — never cache index.html so updates deploy instantly
 const publicDir = path.join(__dirname, 'public');
-app.use(express.static(publicDir));
+app.use(express.static(publicDir, { etag: false, setHeaders: (res, filePath) => {
+  if (filePath.endsWith('index.html')) {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+  } else {
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+  }
+}}));
 app.use((req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
   res.sendFile(path.join(publicDir, 'index.html'));
 });
 
