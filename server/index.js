@@ -97,8 +97,7 @@ app.post('/admin/seed', (req, res) => {
 // Serve React frontend
 const publicDir = path.join(__dirname, 'public');
 app.use(express.static(publicDir));
-app.get('*', (req, res, next) => {
-  if (req.path.startsWith('/auth') || req.path.startsWith('/bookmarks') || req.path.startsWith('/proxy') || req.path.startsWith('/admin') || req.path.startsWith('/health')) return next();
+app.get('*', (req, res) => {
   res.sendFile(path.join(publicDir, 'index.html'));
 });
 
