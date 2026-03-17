@@ -51,6 +51,7 @@ export default function App() {
   const [tags, setTags] = useState([]);
   const [activeTag, setActiveTag] = useState('');
   const [searchFocused, setSearchFocused] = useState(false);
+  const [bottomBarHovered, setBottomBarHovered] = useState(false);
   const [search, setSearch] = useState('');
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState('');
@@ -195,8 +196,12 @@ export default function App() {
         <Grid bookmarks={bookmarks} onDelete={isAdmin ? deleteBookmark : null} />
       </div>
 
-      <div className="bottom-bar">
-        {(searchFocused || activeTag) && tags.length > 0 && (
+      <div
+        className="bottom-bar"
+        onMouseEnter={() => setBottomBarHovered(true)}
+        onMouseLeave={() => setBottomBarHovered(false)}
+      >
+        {(searchFocused || bottomBarHovered || activeTag) && tags.length > 0 && (
           <div className="tag-chips">
             {tags.map(({ tag }) => (
               <button
