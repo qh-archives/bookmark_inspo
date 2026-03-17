@@ -28,10 +28,21 @@ export default function App() {
     }
     const saved = localStorage.getItem('tw_user');
     if (saved) return JSON.parse(saved);
-    // Auto-login queenie_hsiao if no session exists
     const defaultUser = { id: '332267805', username: 'queenie_hsiao', name: 'queenie hsiao', profile_image_url: 'https://pbs.twimg.com/profile_images/2028682115139657728/EYB56XMC_normal.jpg' };
     localStorage.setItem('tw_user', JSON.stringify(defaultUser));
     return defaultUser;
+  });
+
+  // Admin mode: visit /?admin=<key> once to unlock, persists in localStorage
+  const [isAdmin, setIsAdmin] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const adminParam = params.get('admin');
+    if (adminParam) {
+      localStorage.setItem('admin_key', adminParam);
+      window.history.replaceState({}, '', '/');
+      return true;
+    }
+    return !!localStorage.getItem('admin_key');
   });
 
   const [bookmarks, setBookmarks] = useState([]);
@@ -156,12 +167,11 @@ export default function App() {
     setUser(null); setBookmarks([]); setCategories([]);
   };
 
-  const ADMIN_KEY = import.meta.env.VITE_ADMIN_KEY || '';
-
   const deleteBookmark = async (id) => {
+    const adminKey = localStorage.getItem('admin_key') || '';
     await fetch(`${API}/bookmarks/${id}`, {
       method: 'DELETE',
-      headers: { 'x-admin-key': ADMIN_KEY },
+      headers: { 'x-admin-key': adminKey },
     });
     setBookmarks(prev => prev.filter(b => b.id !== id));
   };
@@ -170,16 +180,18 @@ export default function App() {
 
   return (
     <div className="app">
-      <div className="top-bar">
-        <div className="user-pill" title={`@${user.username} — click to log out`} onClick={handleLogout}>
-          {user.profile_image_url
-            ? <img src={user.profile_image_url} alt="" className="user-avatar-img" />
-            : <span style={{ fontSize: 13, color: '#888' }}>{user.name?.[0]}</span>}
+      {isAdmin && (
+        <div className="top-bar">
+          <div className="user-pill" title={`@${user.username} — click to log out`} onClick={handleLogout}>
+            {user.profile_image_url
+              ? <img src={user.profile_image_url} alt="" className="user-avatar-img" />
+              : <span style={{ fontSize: 13, color: '#888' }}>{user.name?.[0]}</span>}
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="grid-scroll">
-        <Grid bookmarks={bookmarks} onDelete={deleteBookmark} />
+        <Grid bookmarks={bookmarks} onDelete={isAdmin ? deleteBookmark : null} />
       </div>
 
       <div className="bottom-bar">

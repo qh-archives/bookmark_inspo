@@ -89,7 +89,7 @@ export default function BookmarkCard({ bookmark, onDelete }) {
       {hovered && (
         <div className="card-overlay">
           <div className="overlay-top">
-            <button className="delete-btn" onClick={handleDelete} title="Delete">✕</button>
+            {onDelete && <button className="delete-btn" onClick={handleDelete} title="Delete">✕</button>}
           </div>
           <div className="overlay-bottom">
             {bookmark.author_image && (
