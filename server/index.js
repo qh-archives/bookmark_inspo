@@ -62,6 +62,37 @@ app.get('/proxy/image', async (req, res) => {
 
 app.get('/health', (req, res) => res.json({ ok: true }));
 
+// One-time seed endpoint — inserts user + bookmarks from seed.json
+app.post('/admin/seed', (req, res) => {
+  const fs = require('fs');
+  const path = require('path');
+  const db = require('./db');
+  const seedPath = path.join(__dirname, 'seed.json');
+  if (!fs.existsSync(seedPath)) return res.status(404).json({ error: 'No seed.json found' });
+  try {
+    const { users = [], bookmarks = [] } = JSON.parse(fs.readFileSync(seedPath, 'utf8'));
+    const insertUser = db.prepare(`INSERT OR IGNORE INTO users (id, username, name, profile_image_url, created_at) VALUES (@id, @username, @name, @profile_image_url, @created_at)`);
+    const insertBm = db.prepare(`INSERT OR IGNORE INTO bookmarks (
+      id, user_id, tweet_id, text, author_name, author_username, author_image,
+      media_url, media_type, preview_image, video_url, media_width, media_height,
+      url, link_title, link_description, link_image, category, category_emoji,
+      tags, canvas_x, canvas_y, canvas_rotation, bookmarked_at, created_at
+    ) VALUES (
+      @id, @user_id, @tweet_id, @text, @author_name, @author_username, @author_image,
+      @media_url, @media_type, @preview_image, @video_url, @media_width, @media_height,
+      @url, @link_title, @link_description, @link_image, @category, @category_emoji,
+      @tags, @canvas_x, @canvas_y, @canvas_rotation, @bookmarked_at, @created_at
+    )`);
+    db.transaction(() => {
+      users.forEach(u => insertUser.run(u));
+      bookmarks.forEach(b => insertBm.run(b));
+    })();
+    res.json({ ok: true, users: users.length, bookmarks: bookmarks.length });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`\n🔖 Twitter Bookmarks server running at http://localhost:${PORT}`);
