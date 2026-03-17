@@ -8,7 +8,8 @@
     "https://twitter.com/*",
     "https://x.com/*",
     "http://localhost:3001/*",
-    "http://127.0.0.1:3001/*"
+    "http://127.0.0.1:3001/*",
+    "https://bookmarkinspo-production.up.railway.app/*"
   ],
   "content_scripts": [
     {

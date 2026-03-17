@@ -1,5 +1,4 @@
-// Change this to your Railway URL once deployed, e.g. 'https://your-app.up.railway.app'
-const SERVER = 'http://127.0.0.1:3001';
+const SERVER = 'https://bookmarkinspo-production.up.railway.app';
 const sent = new Set();
 
 function extractTweet(article) {
