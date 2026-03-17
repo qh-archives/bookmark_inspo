@@ -39,9 +39,40 @@ html, body, #root { width: 100%; height: 100%; background: #000; color: #fff; fo
   transform: translateX(-50%);
   z-index: 100;
   width: 100%;
-  max-width: 520px;
+  max-width: 640px;
   padding: 0 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
 }
+
+/* ─── Tag Chips ─── */
+.tag-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 100%;
+}
+
+.tag-chip {
+  background: rgba(18,18,18,0.9);
+  border: 1px solid #333;
+  color: #888;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 5px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+  transition: all 0.15s;
+  white-space: nowrap;
+  font-family: inherit;
+  letter-spacing: 0.2px;
+}
+.tag-chip:hover { border-color: #555; color: #ccc; }
+.tag-chip.active { background: #fff; color: #000; border-color: #fff; font-weight: 600; }
 
 .search-box {
   display: flex;

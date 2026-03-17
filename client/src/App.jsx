@@ -37,6 +37,8 @@ export default function App() {
   const [bookmarks, setBookmarks] = useState([]);
   const [categories, setCategories] = useState([]);
   const [activeCategory, setActiveCategory] = useState('All');
+  const [tags, setTags] = useState([]);
+  const [activeTag, setActiveTag] = useState('');
   const [search, setSearch] = useState('');
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState('');
@@ -53,15 +55,16 @@ export default function App() {
     }
   }, []);
 
-  const fetchBookmarks = useCallback(async (searchVal = search, catVal = activeCategory) => {
+  const fetchBookmarks = useCallback(async (searchVal = search, catVal = activeCategory, tagVal = activeTag) => {
     if (!user) return;
     const params = new URLSearchParams({ user_id: user.id, limit: 500 });
     if (catVal && catVal !== 'All') params.set('category', catVal);
-    if (searchVal) params.set('search', searchVal);
+    if (tagVal) params.set('search', tagVal);
+    else if (searchVal) params.set('search', searchVal);
     const res = await fetch(`${API}/bookmarks?${params}`);
     const data = await res.json();
     setBookmarks(Array.isArray(data) ? data : []);
-  }, [user, search, activeCategory]);
+  }, [user, search, activeCategory, activeTag]);
 
   const fetchCategories = useCallback(async () => {
     if (!user) return;
@@ -70,8 +73,15 @@ export default function App() {
     setCategories(Array.isArray(data) ? data : []);
   }, [user]);
 
+  const fetchTags = useCallback(async () => {
+    if (!user) return;
+    const res = await fetch(`${API}/bookmarks/tags?user_id=${user.id}`);
+    const data = await res.json();
+    setTags(Array.isArray(data) ? data.slice(0, 20) : []);
+  }, [user]);
+
   useEffect(() => {
-    if (user) { fetchBookmarks('', 'All'); fetchCategories(); }
+    if (user) { fetchBookmarks('', 'All', ''); fetchCategories(); fetchTags(); }
   }, [user]);
 
   // Auto-refresh every 15 seconds to pick up new bookmarks from extension
@@ -85,8 +95,16 @@ export default function App() {
 
   const handleSearch = (val) => {
     setSearch(val);
+    setActiveTag('');
     clearTimeout(searchTimeout.current);
-    searchTimeout.current = setTimeout(() => fetchBookmarks(val, activeCategory), 300);
+    searchTimeout.current = setTimeout(() => fetchBookmarks(val, activeCategory, ''), 300);
+  };
+
+  const handleTag = (tag) => {
+    const next = activeTag === tag ? '' : tag;
+    setActiveTag(next);
+    setSearch('');
+    fetchBookmarks('', activeCategory, next);
   };
 
   const handleCategory = (cat) => {
@@ -160,18 +178,31 @@ export default function App() {
       </div>
 
       <div className="bottom-bar">
+        {tags.length > 0 && (
+          <div className="tag-chips">
+            {tags.map(({ tag }) => (
+              <button
+                key={tag}
+                className={`tag-chip${activeTag === tag ? ' active' : ''}`}
+                onClick={() => handleTag(tag)}
+              >
+                {tag}
+              </button>
+            ))}
+          </div>
+        )}
         <div className="search-box">
           <svg className="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
           </svg>
           <input
             type="text"
-            placeholder="Search your bookmarks…"
+            placeholder="Search bookmarks, tags, authors…"
             value={search}
             onChange={e => handleSearch(e.target.value)}
             className="search-input"
           />
-          {search && <button className="search-clear" onClick={() => handleSearch('')}>✕</button>}
+          {(search || activeTag) && <button className="search-clear" onClick={() => { handleSearch(''); setActiveTag(''); fetchBookmarks('', activeCategory, ''); }}>✕</button>}
         </div>
       </div>
     </div>

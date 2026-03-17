@@ -7,7 +7,7 @@ const {
   resolveCleanText,
   refreshAccessToken,
 } = require('../services/twitter');
-const { categorize } = require('../services/categorize');
+const { categorize, tagify } = require('../services/categorize');
 
 const CARD_W = 260;
 const CARD_H = 300;
@@ -165,9 +165,9 @@ router.get('/', (req, res) => {
   }
 
   if (search) {
-    query += ' AND (text LIKE ? OR author_name LIKE ? OR author_username LIKE ? OR link_title LIKE ? OR category LIKE ?)';
+    query += ' AND (text LIKE ? OR author_name LIKE ? OR author_username LIKE ? OR link_title LIKE ? OR category LIKE ? OR tags LIKE ?)';
     const like = `%${search}%`;
-    params.push(like, like, like, like, like);
+    params.push(like, like, like, like, like, like);
   }
 
   query += ' ORDER BY bookmarked_at DESC LIMIT ?';
@@ -259,6 +259,7 @@ router.post('/import', (req, res) => {
   }
 
   const { category, emoji } = categorize({ text, link_title });
+  const tags = tagify({ text, link_title, author_username });
   const pos = randomPosition();
 
   db.prepare(`
@@ -267,16 +268,16 @@ router.post('/import', (req, res) => {
       author_name, author_username, author_image,
       media_url, preview_image,
       url, link_title, link_image,
-      category, category_emoji,
+      category, category_emoji, tags,
       canvas_x, canvas_y, canvas_rotation,
       bookmarked_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     id, user.id, tweet_id, text || '',
     author_name || '', author_username || '', author_image || null,
     media_url || null, preview_image || null,
     link_url || tweet_url || null, link_title || null, link_image || null,
-    category, emoji,
+    category, emoji, JSON.stringify(tags),
     pos.x, pos.y, pos.rotation,
     Date.now()
   );
@@ -289,6 +290,38 @@ router.get('/categories', (req, res) => {
   if (!user_id) return res.status(400).json({ error: 'user_id required' });
   const cats = db.prepare('SELECT category, category_emoji, COUNT(*) as count FROM bookmarks WHERE user_id = ? GROUP BY category ORDER BY count DESC').all(user_id);
   res.json(cats);
+});
+
+// Get all unique tags across bookmarks
+router.get('/tags', (req, res) => {
+  const { user_id } = req.query;
+  if (!user_id) return res.status(400).json({ error: 'user_id required' });
+  const rows = db.prepare('SELECT tags FROM bookmarks WHERE user_id = ? AND tags IS NOT NULL AND tags != ?').all(user_id, '[]');
+  const tagCount = {};
+  for (const row of rows) {
+    try {
+      const tags = JSON.parse(row.tags);
+      for (const t of tags) tagCount[t] = (tagCount[t] || 0) + 1;
+    } catch {}
+  }
+  const sorted = Object.entries(tagCount).sort((a, b) => b[1] - a[1]).map(([tag, count]) => ({ tag, count }));
+  res.json(sorted);
+});
+
+// Re-tag all existing bookmarks
+router.post('/retag', (req, res) => {
+  const { user_id } = req.query;
+  const rows = user_id
+    ? db.prepare('SELECT id, text, link_title, author_username FROM bookmarks WHERE user_id = ?').all(user_id)
+    : db.prepare('SELECT id, text, link_title, author_username FROM bookmarks').all();
+  const update = db.prepare('UPDATE bookmarks SET tags = ? WHERE id = ?');
+  db.transaction(() => {
+    for (const row of rows) {
+      const tags = tagify({ text: row.text, link_title: row.link_title, author_username: row.author_username });
+      update.run(JSON.stringify(tags), row.id);
+    }
+  })();
+  res.json({ ok: true, retagged: rows.length });
 });
 
 module.exports = router;
