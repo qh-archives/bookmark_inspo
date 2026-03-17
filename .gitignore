@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+
+# Environment variables (contains secret keys — never commit!)
+.env
+server/.env
+
+# SQLite database (contains your personal bookmark data)
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+
+# Build output
+dist/
+build/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
