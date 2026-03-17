@@ -50,6 +50,8 @@ export default function App() {
   const [activeCategory, setActiveCategory] = useState('All');
   const [tags, setTags] = useState([]);
   const [activeTag, setActiveTag] = useState('');
+  const [showTags, setShowTags] = useState(false);
+  const hideTagsTimer = useRef(null);
   const [search, setSearch] = useState('');
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState('');
@@ -195,8 +197,12 @@ export default function App() {
       </div>
 
       <div className="bottom-bar">
-        {tags.length > 0 && (
-          <div className="tag-chips">
+        {(showTags || activeTag) && tags.length > 0 && (
+          <div
+            className="tag-chips"
+            onMouseEnter={() => { clearTimeout(hideTagsTimer.current); }}
+            onMouseLeave={() => { hideTagsTimer.current = setTimeout(() => setShowTags(false), 200); }}
+          >
             {tags.map(({ tag }) => (
               <button
                 key={tag}
@@ -217,9 +223,11 @@ export default function App() {
             placeholder="Search bookmarks, tags, authors…"
             value={search}
             onChange={e => handleSearch(e.target.value)}
+            onFocus={() => { clearTimeout(hideTagsTimer.current); setShowTags(true); }}
+            onBlur={() => { hideTagsTimer.current = setTimeout(() => setShowTags(false), 200); }}
             className="search-input"
           />
-          {(search || activeTag) && <button className="search-clear" onClick={() => { handleSearch(''); setActiveTag(''); fetchBookmarks('', activeCategory, ''); }}>✕</button>}
+          {(search || activeTag) && <button className="search-clear" onClick={() => { handleSearch(''); setActiveTag(''); setShowTags(false); fetchBookmarks('', activeCategory, ''); }}>✕</button>}
         </div>
       </div>
     </div>
