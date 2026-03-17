@@ -97,7 +97,7 @@ app.post('/admin/seed', (req, res) => {
 // Serve React frontend
 const publicDir = path.join(__dirname, 'public');
 app.use(express.static(publicDir));
-app.get('*', (req, res) => {
+app.use((req, res) => {
   res.sendFile(path.join(publicDir, 'index.html'));
 });
 

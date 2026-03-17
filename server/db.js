@@ -62,8 +62,8 @@ if (fs.existsSync(seedPath)) {
     try {
       const { users = [], bookmarks = [] } = JSON.parse(fs.readFileSync(seedPath, 'utf8'));
       const insertUser = db.prepare(`
-        INSERT OR IGNORE INTO users (id, username, name, profile_image_url, created_at)
-        VALUES (@id, @username, @name, @profile_image_url, @created_at)
+        INSERT OR IGNORE INTO users (id, username, name, profile_image_url)
+        VALUES (@id, @username, @name, @profile_image_url)
       `);
       const insertBm = db.prepare(`
         INSERT OR IGNORE INTO bookmarks (
