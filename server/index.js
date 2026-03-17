@@ -71,7 +71,7 @@ app.post('/admin/seed', (req, res) => {
   if (!fs.existsSync(seedPath)) return res.status(404).json({ error: 'No seed.json found' });
   try {
     const { users = [], bookmarks = [] } = JSON.parse(fs.readFileSync(seedPath, 'utf8'));
-    const insertUser = db.prepare(`INSERT OR IGNORE INTO users (id, username, name, profile_image_url, created_at) VALUES (@id, @username, @name, @profile_image_url, @created_at)`);
+    const insertUser = db.prepare(`INSERT OR IGNORE INTO users (id, username, name, profile_image_url) VALUES (@id, @username, @name, @profile_image_url)`);
     const insertBm = db.prepare(`INSERT OR IGNORE INTO bookmarks (
       id, user_id, tweet_id, text, author_name, author_username, author_image,
       media_url, media_type, preview_image, video_url, media_width, media_height,
