@@ -156,8 +156,13 @@ export default function App() {
     setUser(null); setBookmarks([]); setCategories([]);
   };
 
+  const ADMIN_KEY = import.meta.env.VITE_ADMIN_KEY || '';
+
   const deleteBookmark = async (id) => {
-    await fetch(`${API}/bookmarks/${id}`, { method: 'DELETE' });
+    await fetch(`${API}/bookmarks/${id}`, {
+      method: 'DELETE',
+      headers: { 'x-admin-key': ADMIN_KEY },
+    });
     setBookmarks(prev => prev.filter(b => b.id !== id));
   };
 

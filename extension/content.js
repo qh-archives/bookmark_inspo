@@ -1,4 +1,5 @@
 const SERVER = 'https://bookmarkinspo-production.up.railway.app';
+const ADMIN_KEY = '4e96bbe07369f865af2690117d827cd792db39672804fbef';
 const sent = new Set();
 
 function extractTweet(article) {
@@ -26,7 +27,7 @@ async function sendTweet(data) {
   try {
     const res = await fetch(`${SERVER}/bookmarks/import`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-admin-key': ADMIN_KEY },
       body: JSON.stringify({
         tweet_id: data.tweetId,
         tweet_url: data.tweetUrl,
@@ -76,7 +77,8 @@ document.addEventListener('click', (e) => {
 
 async function deleteFromServer(tweetId) {
   try {
-    const res = await fetch(`${SERVER}/bookmarks/by-tweet/${tweetId}?user_id=all`, { method: 'DELETE' });
+    const res = await fetch(`${SERVER}/bookmarks/by-tweet/${tweetId}?user_id=all`, {
+      method: 'DELETE', headers: { 'x-admin-key': ADMIN_KEY } });
     const json = await res.json();
     if (json.deleted > 0) showToast('Removed from canvas');
   } catch {}

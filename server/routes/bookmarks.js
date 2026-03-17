@@ -4,6 +4,15 @@ const db = require('../db');
 const { getBookmarks, extractLinkPreview, resolveCleanText, refreshAccessToken } = require('../services/twitter');
 const { categorize, tagify } = require('../services/categorize');
 
+// Only allow writes if ADMIN_KEY matches (or no key is set, for local dev)
+function requireAdmin(req, res, next) {
+  const key = process.env.ADMIN_KEY;
+  if (!key) return next();
+  const provided = req.headers['x-admin-key'] || req.query.admin_key || req.body?.admin_key;
+  if (provided !== key) return res.status(403).json({ error: 'Unauthorized' });
+  next();
+}
+
 const CARD_W = 260, CARD_H = 300, GAP_X = 30, GAP_Y = 30, COLS = 6;
 let gridCounter = 0;
 
@@ -103,13 +112,13 @@ router.get('/', async (req, res) => {
   res.json(await db.query(query, params));
 });
 
-router.patch('/:id/position', async (req, res) => {
+router.patch('/:id/position', requireAdmin, async (req, res) => {
   const { x, y, rotation } = req.body;
   await db.run('UPDATE bookmarks SET canvas_x=?,canvas_y=?,canvas_rotation=? WHERE id=?', [x, y, rotation, req.params.id]);
   res.json({ ok: true });
 });
 
-router.delete('/by-tweet/:tweet_id', async (req, res) => {
+router.delete('/by-tweet/:tweet_id', requireAdmin, async (req, res) => {
   const { tweet_id } = req.params;
   const { user_id } = req.query;
   const result = user_id && user_id !== 'all'
@@ -118,12 +127,12 @@ router.delete('/by-tweet/:tweet_id', async (req, res) => {
   res.json({ ok: true, deleted: result.changes });
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requireAdmin, async (req, res) => {
   await db.run('DELETE FROM bookmarks WHERE id=?', [req.params.id]);
   res.json({ ok: true });
 });
 
-router.patch('/:id/category', async (req, res) => {
+router.patch('/:id/category', requireAdmin, async (req, res) => {
   const { category, emoji } = req.body;
   await db.run('UPDATE bookmarks SET category=?,category_emoji=? WHERE id=?', [category, emoji, req.params.id]);
   res.json({ ok: true });
