@@ -7,7 +7,7 @@ const CATEGORY_COLORS = {
   Business: '#94a3b8', Learning: '#38bdf8', Entertainment: '#fb7185',
 };
 
-const PROXY = 'http://127.0.0.1:3001';
+const PROXY = import.meta.env.VITE_API_URL || 'http://127.0.0.1:3001';
 
 function proxyVideo(url) {
   return url ? `${PROXY}/proxy/video?url=${encodeURIComponent(url)}` : null;

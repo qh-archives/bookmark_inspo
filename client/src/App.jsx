@@ -3,7 +3,7 @@ import Grid from './components/Grid';
 import LoginScreen from './components/LoginScreen';
 import './App.css';
 
-const API = '';
+const API = import.meta.env.VITE_API_URL || '';
 
 function parseUserFromUrl() {
   const params = new URLSearchParams(window.location.search);
